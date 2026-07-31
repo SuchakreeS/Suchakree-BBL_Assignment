@@ -5,6 +5,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors({ origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173' });
   app.useGlobalGuards(app.get(JwtAuthGuard));
   app.useGlobalPipes(
     new ValidationPipe({
