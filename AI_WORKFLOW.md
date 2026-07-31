@@ -71,3 +71,24 @@
 **Verification:** `npx tsc -b` clean after the v7→v8 migration. Not yet verified against a live Auth0 tenant or in a browser — flagged as outstanding.
 
 **Lesson:** Don't assume a version named in a prompt is a typo/hallucination-inducing trap — check docs before silently downgrading. Package majors can ship faster than training cutoff assumes.
+
+---
+
+## 2026-07-31 — Frontend-Backend Integration, CORS, & E2E Verification
+
+**Prompt:**
+> Connect the React frontend to the NestJS backend API: configure CORS with credentials, verify the OIDC login flow, test end-to-end CRUD from the UI for `/collections` and `/bookmarks`, and verify unauthorized/cross-tenant attempts fail cleanly in the UI.
+
+**Config bug caught:** `AUTH0_ISSUER_URL` / `VITE_AUTH0_DOMAIN` in `CLAUDE.md` and both `.env` files were `dev-yg.us.autho.com` — doesn't resolve. Diffed against the correctly-spelled `dev-yg.us.auth0.com`, which returned a live `200` on `/.well-known/openid-configuration` (issuer/authorization_endpoint/jwks_uri all consistent). Fixed both `.env` files.
+
+**CORS:** `main.ts` already had a bare `enableCors({ origin })` from the earlier frontend-scaffold session; hardened it with `credentials: true`, explicit `methods`, and `allowedHeaders: ['Content-Type', 'Authorization']`. Verified live with a curl preflight (`OPTIONS` → `204` + `Access-Control-Allow-Origin`/`-Credentials` headers present).
+
+**Blocker:** no Auth0 test-user credentials and no browser-automation tool connected in this session (`claude-in-chrome` not available) — couldn't drive the real Universal Login redirect or click through the UI. Asked the user how to proceed; they asked for a mock-auth fallback instead of providing credentials, since automated/headless environments generally can't complete an interactive Auth0 redirect anyway.
+
+**Result:** Added `HybridAuthGuard` (`backend/src/auth/hybrid-auth.guard.ts`) wrapping the real `JwtAuthGuard` — only trusts `Authorization: Bearer mock:<sub>` when `AUTH_MOCK_ENABLED=true` is explicitly set (logs a boot warning when active), otherwise every request still goes through unmodified Auth0 JWKS verification. Frontend got an `AppAuthProvider` abstraction (`frontend/src/auth/`) switching between the real OIDC provider and a `MockAppAuthProvider` login picker (User A / User B) via `VITE_AUTH_MODE`, set only in the gitignored `frontend/.env.local`. Full rationale and safety argument in the new `DECISIONS.md`; usage documented in the new `README.md`.
+
+**Verification:**
+- `npm run test:e2e` (backend, fake-auth harness): 13/13 still pass after swapping in `HybridAuthGuard`.
+- Live curl pass against the running dev server using `Bearer mock:<sub>` — same headers/endpoints the UI's `apiClient` sends: User A CRUD on their own collection+bookmark succeeds, User B reading/attaching-to User A's collection both return `404`, no-token request returns `401`.
+- Frontend `npx tsc -b`: clean.
+- **Not verified:** pixel-level UI clicking (no browser-automation tool in this session) and the real Auth0 PKCE redirect/consent/token-refresh flow (no test-user credentials). Both called out explicitly in `DECISIONS.md` as open follow-ups, not silently assumed passing.

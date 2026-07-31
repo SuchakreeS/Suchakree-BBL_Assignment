@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { useAuth } from 'react-oidc-context';
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
+import { useAppAuth } from '../auth/AppAuthContext';
+import { isMockMode } from '../auth/AppAuthProvider';
 
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const auth = useAuth();
+  const auth = useAppAuth();
 
   if (auth.isLoading) {
     return (
@@ -17,9 +18,20 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     return (
       <Box display="flex" flexDirection="column" alignItems="center" gap={2} mt={8}>
         <Typography variant="h5">Sign in required</Typography>
-        <Button variant="contained" onClick={() => auth.signinRedirect()}>
-          Sign In
-        </Button>
+        {isMockMode ? (
+          <Stack direction="row" gap={2}>
+            <Button variant="contained" onClick={() => auth.signIn('auth0|user-a')}>
+              Sign in as User A
+            </Button>
+            <Button variant="outlined" onClick={() => auth.signIn('auth0|user-b')}>
+              Sign in as User B
+            </Button>
+          </Stack>
+        ) : (
+          <Button variant="contained" onClick={() => auth.signIn()}>
+            Sign In
+          </Button>
+        )}
       </Box>
     );
   }

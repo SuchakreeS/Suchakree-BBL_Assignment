@@ -1,9 +1,9 @@
 import { AppBar, Box, Button, Container, Tab, Tabs, Toolbar, Typography } from '@mui/material';
 import { Outlet, useLocation, useNavigate } from 'react-router';
-import { useAuth } from 'react-oidc-context';
+import { useAppAuth } from '../auth/AppAuthContext';
 
 export function Layout() {
-  const auth = useAuth();
+  const auth = useAppAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const tab = location.pathname.startsWith('/bookmarks') ? '/bookmarks' : '/collections';
@@ -22,11 +22,18 @@ export function Layout() {
             </Tabs>
           )}
           {auth.isAuthenticated ? (
-            <Button color="inherit" onClick={() => auth.removeUser()}>
-              Sign Out
-            </Button>
+            <>
+              {auth.userLabel && (
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  {auth.userLabel}
+                </Typography>
+              )}
+              <Button color="inherit" onClick={() => auth.signOut()}>
+                Sign Out
+              </Button>
+            </>
           ) : (
-            <Button color="inherit" onClick={() => auth.signinRedirect()}>
+            <Button color="inherit" onClick={() => auth.signIn()}>
               Sign In
             </Button>
           )}

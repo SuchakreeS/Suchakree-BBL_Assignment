@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
-import { useAuth } from 'react-oidc-context';
+import { useAppAuth } from '../auth/AppAuthContext';
 import { setTokenGetter } from '../api/client';
 
 export function TokenBridge() {
-  const auth = useAuth();
+  const auth = useAppAuth();
 
   useEffect(() => {
-    setTokenGetter(() => auth.user?.access_token);
-  }, [auth.user]);
+    setTokenGetter(auth.getToken);
+  }, [auth]);
 
   return null;
 }

@@ -1,23 +1,22 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
-import { AuthProvider } from 'react-oidc-context'
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
 import './index.css'
 import App from './App.tsx'
-import { authConfig } from './auth/authConfig'
+import { AppAuthProvider } from './auth/AppAuthProvider'
 
 const theme = createTheme()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider {...authConfig}>
+    <AppAuthProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
           <App />
         </BrowserRouter>
       </ThemeProvider>
-    </AuthProvider>
+    </AppAuthProvider>
   </StrictMode>,
 )
