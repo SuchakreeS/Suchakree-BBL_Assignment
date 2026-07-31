@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Collection {
+  id        String     @id @default(uuid())
+  ownerId   String
+  name      String
+  bookmarks Bookmark[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([ownerId])
+}
+
+model Bookmark {
+  id           String      @id @default(uuid())
+  ownerId      String
+  title        String
+  url          String
+  collectionId String?
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([ownerId])
+  @@index([collectionId])
+}

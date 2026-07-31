@@ -29,3 +29,7 @@
 - **Response Style**: Be exceptionally terse. No pleasantries, no chatty preambles, and no long explanations. Output code patches immediately.
 - **Command Control**: Always prefer running tightly targeted test suite flags over global scripts. Never dump multi-page terminal logs into context.
 - **Error Remediation**: If a test compilation or database build fails, isolate the stack trace line, declare the root cause in exactly one sentence, and output the correct code replacement instantly.
+
+## 📋 WORKFLOW & PROMPT LOGGING
+- **Keep a Running Log**: As we build major features (Backend scaffolding, Auth/OIDC, Prisma queries, Frontend UI, Test harness), keep a mental or textual note of key prompts that worked well and any AI hallucinations/failures we encounter.
+- **Transcript Hygiene**: When asked, format our session logs or prompt highlights so they can be easily pasted into `/transcripts/` and `AI_WORKFLOW.md`.
