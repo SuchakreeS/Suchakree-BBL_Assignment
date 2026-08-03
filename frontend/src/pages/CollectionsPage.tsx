@@ -53,7 +53,7 @@ export function CollectionsPage() {
   return (
     <Box>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      <Box display="flex" gap={2} mb={3}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
         <TextField
           label="New collection name"
           size="small"

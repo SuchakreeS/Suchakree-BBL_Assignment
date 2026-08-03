@@ -5,6 +5,7 @@ import { TokenBridge } from './components/TokenBridge';
 import { CollectionsPage } from './pages/CollectionsPage';
 import { CollectionDetailPage } from './pages/CollectionDetailPage';
 import { BookmarksPage } from './pages/BookmarksPage';
+import { BookmarkDetailPage } from './pages/BookmarkDetailPage';
 
 export default function App() {
   return (
@@ -34,6 +35,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <BookmarksPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/bookmarks/:id"
+            element={
+              <RequireAuth>
+                <BookmarkDetailPage />
               </RequireAuth>
             }
           />

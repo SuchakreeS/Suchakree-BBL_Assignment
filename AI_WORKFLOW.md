@@ -151,3 +151,36 @@ passing; each edit re-read before considering it done.
 **Not yet done:** `/transcripts/` still needs the *raw* session exports (this file, `AI_WORKFLOW.md`,
 is the curated summary, not the raw transcript) — see `transcripts/README.md` for what's expected
 there before final submission.
+
+---
+
+## 2026-08-03 — MUI v9 upgrade and bookmark detail view
+
+**Prompt:** re-audit the repo against the PDF brief again after the previous fixes; two real gaps
+turned up: `@mui/material` was still pinned to v6 even though the spec requires ≥v9 (and v9 is now
+actually published — checked `npm view @mui/material versions` and found 9.2.0 stable, so the earlier
+"v9 doesn't exist yet" justification in the 2026-07-31 entry above was correct *at the time* but had
+gone stale), and the `/bookmarks` page never had a "view details" route despite §3.2 explicitly
+requiring one — bookmarks were only ever shown inline in the list, so the `notes` field added earlier
+this session had nowhere to be displayed.
+
+**Result:**
+- `npm install @mui/material@^9.2.0 @mui/icons-material@^9.2.0`.
+- Added `BookmarkDetailPage.tsx` + `/bookmarks/:id` route; `BookmarksPage` and `CollectionDetailPage`
+  list items now navigate there instead of only linking straight out to the external URL. Added a
+  `notes` input to the bookmark create form.
+
+**AI failure caught and fixed (tooling, not logic):** the MUI v6→v9 bump broke `tsc` across every page
+using MUI's shorthand system props directly as JSX props (`<Box display="flex" gap={2} mb={2}>` etc.)
+with `TS2769: No overload matches this call` — MUI's polymorphic `Box`/`Typography`/`Link`/`Stack`
+component typings don't resolve cleanly against this project's TypeScript 6.0.3 (confirmed via
+`npx tsc -v`) the way they did against v6's typings. Adding an explicit `component="div"` (the fix the
+compiler error itself suggests) did **not** actually fix it — same error, just with `component`
+included in the failing overload. Root-caused it to the shorthand system props themselves (`display=`,
+`gap=`, `mb=`, `flexWrap=`, `whiteSpace=`) rather than the polymorphic `component` typing; switched
+every affected usage to the `sx={{ ... }}` prop instead, which types as a plain `SxProps<Theme>` object
+and isn't subject to the same overload resolution. Fixed in `RequireAuth.tsx`, `BookmarksPage.tsx`,
+`CollectionsPage.tsx`, `BookmarkDetailPage.tsx`.
+
+**Verification:** `npx tsc --noEmit -p tsconfig.app.json` clean, `npm run build` (both `tsc -b` and
+`vite build`) clean, backend `npm run test:e2e` still 20/20 (unaffected — frontend-only change).

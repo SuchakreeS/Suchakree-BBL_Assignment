@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Alert, Box, List, ListItem, ListItemText, Typography } from '@mui/material';
-import { useParams } from 'react-router';
+import { Alert, Box, List, ListItem, ListItemButton, ListItemText, Typography } from '@mui/material';
+import { useNavigate, useParams } from 'react-router';
 import { collectionsApi } from '../api/collections';
 import type { Bookmark, Collection } from '../api/types';
 
 export function CollectionDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [collection, setCollection] = useState<Collection | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -26,8 +27,10 @@ export function CollectionDetailPage() {
       </Typography>
       <List>
         {bookmarks.map((b) => (
-          <ListItem key={b.id}>
-            <ListItemText primary={b.title} secondary={b.url} />
+          <ListItem key={b.id} disablePadding>
+            <ListItemButton onClick={() => navigate(`/bookmarks/${b.id}`)}>
+              <ListItemText primary={b.title} secondary={b.url} />
+            </ListItemButton>
           </ListItem>
         ))}
         {bookmarks.length === 0 && <Typography color="text.secondary">No bookmarks yet.</Typography>}
