@@ -39,6 +39,7 @@ async function main() {
   console.log('Seeded users:', { USER_A, USER_B });
 }
 
+
 main()
   .catch((e) => {
     console.error(e);
