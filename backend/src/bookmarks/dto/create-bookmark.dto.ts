@@ -11,5 +11,10 @@ export class CreateBookmarkDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(2000)
+  notes?: string;
+
+  @IsString()
+  @IsOptional()
   collectionId?: string;
 }

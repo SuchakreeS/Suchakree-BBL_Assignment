@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Alert, Box, List, ListItem, ListItemText, Typography } from '@mui/material';
 import { useParams } from 'react-router';
 import { collectionsApi } from '../api/collections';
-import { bookmarksApi } from '../api/bookmarks';
 import type { Bookmark, Collection } from '../api/types';
 
 export function CollectionDetailPage() {
@@ -14,10 +13,7 @@ export function CollectionDetailPage() {
   useEffect(() => {
     if (!id) return;
     collectionsApi.getOne(id).then(setCollection).catch((e) => setError(e.message));
-    bookmarksApi
-      .list()
-      .then((all) => setBookmarks(all.filter((b) => b.collectionId === id)))
-      .catch((e) => setError(e.message));
+    collectionsApi.getBookmarks(id).then(setBookmarks).catch((e) => setError(e.message));
   }, [id]);
 
   if (error) return <Alert severity="error">{error}</Alert>;

@@ -23,6 +23,7 @@ model Bookmark {
   ownerId      String
   title        String
   url          String
+  notes        String?
   collectionId String?
   collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   createdAt    DateTime    @default(now())

@@ -8,11 +8,14 @@ import {
   Param,
   Patch,
   Post,
+  Put,
+  Query,
 } from '@nestjs/common';
 import { OwnerId } from '../auth/owner-id.decorator';
 import { BookmarksService } from './bookmarks.service';
 import { CreateBookmarkDto } from './dto/create-bookmark.dto';
 import { UpdateBookmarkDto } from './dto/update-bookmark.dto';
+import { ReplaceBookmarkDto } from './dto/replace-bookmark.dto';
 
 @Controller('bookmarks')
 export class BookmarksController {
@@ -24,13 +27,18 @@ export class BookmarksController {
   }
 
   @Get()
-  findAll(@OwnerId() ownerId: string) {
-    return this.bookmarksService.findAll(ownerId);
+  findAll(@OwnerId() ownerId: string, @Query('collectionId') collectionId?: string) {
+    return this.bookmarksService.findAll(ownerId, collectionId);
   }
 
   @Get(':id')
   findOne(@OwnerId() ownerId: string, @Param('id') id: string) {
     return this.bookmarksService.findOne(ownerId, id);
+  }
+
+  @Put(':id')
+  replace(@OwnerId() ownerId: string, @Param('id') id: string, @Body() dto: ReplaceBookmarkDto) {
+    return this.bookmarksService.replace(ownerId, id, dto);
   }
 
   @Patch(':id')

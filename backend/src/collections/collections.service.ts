@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
+import { ReplaceCollectionDto } from './dto/replace-collection.dto';
 
 @Injectable()
 export class CollectionsService {
@@ -30,7 +31,7 @@ export class CollectionsService {
     return collection;
   }
 
-  async update(ownerId: string, id: string, dto: UpdateCollectionDto) {
+  async update(ownerId: string, id: string, dto: UpdateCollectionDto | ReplaceCollectionDto) {
     const { count } = await this.prisma.collection.updateMany({
       where: { id, ownerId },
       data: dto,
@@ -39,6 +40,18 @@ export class CollectionsService {
       throw new NotFoundException('Collection not found');
     }
     return this.findOne(ownerId, id);
+  }
+
+  async replace(ownerId: string, id: string, dto: ReplaceCollectionDto) {
+    return this.update(ownerId, id, dto);
+  }
+
+  async findBookmarks(ownerId: string, id: string) {
+    await this.findOne(ownerId, id);
+    return this.prisma.bookmark.findMany({
+      where: { ownerId, collectionId: id },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async remove(ownerId: string, id: string) {

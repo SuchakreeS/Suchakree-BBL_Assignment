@@ -14,7 +14,7 @@
 - **Mandatory Flow**: Authorization Code Flow with PKCE (S256). Implicit flows are banned.
 - **Tenant Values**:
   - Audience: `https://bbl-candidate-test-api`
-  - Discovery: `https://dev-yg.us.autho.com/.well-known/openid-configuration`[cite: 1]
+  - Discovery: `https://dev-yg.us.auth0.com/.well-known/openid-configuration`[cite: 1]
   - Client ID: `H9F6QG5SzTKMv0tbmgxLj9LjG1EKVllA`[cite: 1]
 - **Verification Rule**: Guard every controller path via explicit Passport/JWT strategies. Extract `ownerId` dynamically from verified Bearer sub properties.
 

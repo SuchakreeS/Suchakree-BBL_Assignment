@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookmarkDto } from './dto/create-bookmark.dto';
 import { UpdateBookmarkDto } from './dto/update-bookmark.dto';
+import { ReplaceBookmarkDto } from './dto/replace-bookmark.dto';
 
 @Injectable()
 export class BookmarksService {
@@ -25,14 +26,18 @@ export class BookmarksService {
         ownerId,
         title: dto.title,
         url: dto.url,
+        notes: dto.notes,
         collectionId: dto.collectionId,
       },
     });
   }
 
-  findAll(ownerId: string) {
+  async findAll(ownerId: string, collectionId?: string) {
+    if (collectionId) {
+      await this.assertCollectionOwnership(ownerId, collectionId);
+    }
     return this.prisma.bookmark.findMany({
-      where: { ownerId },
+      where: { ownerId, ...(collectionId ? { collectionId } : {}) },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -47,7 +52,7 @@ export class BookmarksService {
     return bookmark;
   }
 
-  async update(ownerId: string, id: string, dto: UpdateBookmarkDto) {
+  async update(ownerId: string, id: string, dto: UpdateBookmarkDto | ReplaceBookmarkDto) {
     if (dto.collectionId) {
       await this.assertCollectionOwnership(ownerId, dto.collectionId);
     }
@@ -59,6 +64,10 @@ export class BookmarksService {
       throw new NotFoundException('Bookmark not found');
     }
     return this.findOne(ownerId, id);
+  }
+
+  async replace(ownerId: string, id: string, dto: ReplaceBookmarkDto) {
+    return this.update(ownerId, id, dto);
   }
 
   async remove(ownerId: string, id: string) {

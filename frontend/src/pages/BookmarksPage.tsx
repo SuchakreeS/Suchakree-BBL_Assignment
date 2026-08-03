@@ -26,11 +26,11 @@ export function BookmarksPage() {
   const [error, setError] = useState<string | null>(null);
 
   const load = () => {
-    bookmarksApi.list().then(setBookmarks).catch((e) => setError(e.message));
+    bookmarksApi.list(filterId || undefined).then(setBookmarks).catch((e) => setError(e.message));
     collectionsApi.list().then(setCollections).catch((e) => setError(e.message));
   };
 
-  useEffect(load, []);
+  useEffect(load, [filterId]);
 
   const handleCreate = async () => {
     if (!title.trim() || !url.trim()) return;
@@ -58,7 +58,7 @@ export function BookmarksPage() {
     }
   };
 
-  const visible = filterId ? bookmarks.filter((b) => b.collectionId === filterId) : bookmarks;
+  const visible = bookmarks;
 
   return (
     <Box>

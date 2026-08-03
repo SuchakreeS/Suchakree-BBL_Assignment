@@ -92,3 +92,62 @@
 - Live curl pass against the running dev server using `Bearer mock:<sub>` — same headers/endpoints the UI's `apiClient` sends: User A CRUD on their own collection+bookmark succeeds, User B reading/attaching-to User A's collection both return `404`, no-token request returns `401`.
 - Frontend `npx tsc -b`: clean.
 - **Not verified:** pixel-level UI clicking (no browser-automation tool in this session) and the real Auth0 PKCE redirect/consent/token-refresh flow (no test-user credentials). Both called out explicitly in `DECISIONS.md` as open follow-ups, not silently assumed passing.
+
+---
+
+## 2026-08-03 — Spec-compliance audit and gap fixes
+
+**Prompt:** re-read the take-home brief PDF and audit the repo against every §3/§5 requirement:
+backend resource shape, privacy enforcement, DTOs, seed data, test coverage, frontend pages, and all
+required deliverable files.
+
+**Audit findings (via a research subagent cross-referencing the PDF against the actual code):**
+`API_DESIGN.md` and `/transcripts/` were both missing entirely despite being required, graded
+deliverables. Core-spec gaps: no `PUT` verb on either resource (§3.1 explicitly lists PUT and PATCH as
+distinct), no `GET /me`, no real `GET /collections/:id/bookmarks` (the frontend was faking it by
+fetching all bookmarks and filtering client-side by `collectionId`), and `GET /bookmarks` had no
+server-side filter param at all — filtering was 100% client-side. `DECISIONS.md` never addressed §3.3
+(collection sharing) or the collection-delete cascade behavior. `CLAUDE.md` itself still had the
+`autho.com` typo in its Auth0 config block even though the actual `.env` values had been corrected in
+an earlier session — a fresh agent reading `CLAUDE.md` would have been pointed at the broken domain
+again.
+
+**AI failure caught and fixed (this session, on myself):** the `notes` field from the spec's
+suggested Bookmark shape (§3.1.4) had been silently dropped during backend scaffolding — DTOs,
+Prisma schema, and API responses had no `notes` field at all, and nothing flagged the omission.
+Added it end-to-end (schema + migration + all three DTOs + service `create`).
+
+**Result:**
+- Backend: added `PUT` on both `CollectionsController`/`BookmarksController` (new `Replace*Dto`s
+  with required full-replace fields, vs. optional on the PATCH `Update*Dto`s), a `GET /me` endpoint,
+  a real `GET /collections/:id/bookmarks` route (`CollectionsService.findBookmarks`, ownership-checked),
+  server-side `GET /bookmarks?collectionId=` filtering (also ownership-checked via the existing
+  `assertCollectionOwnership`), and the `notes` field.
+- Frontend: `BookmarksPage`/`CollectionDetailPage` switched from client-side `.filter()` to the new
+  server-side filter/nested-route endpoints.
+- Docs: wrote `API_DESIGN.md` from scratch (contract, error shape, privacy-invariant enforcement
+  with code citations, on-delete behavior, and the "3 places the agent was wrong" section required by
+  §5); extended `DECISIONS.md` with the §3.3 sharing decision (explicitly deferred, with a documented
+  reason and a concrete follow-up design) and the cascade-vs-orphan delete rationale; added the bearer-
+  token-choice rationale to `README.md` (access token, not ID token — verified against the tenant's
+  discovery document); fixed the `autho.com` → `auth0.com` typo in `CLAUDE.md`.
+- Tests: added 8 new e2e cases covering the new endpoints (PUT on both resources, `/me`, the nested
+  bookmarks route including its own cross-tenant 404 check, and the new filter param's happy-path +
+  cross-tenant case) — 20/20 passing.
+
+**AI/tooling failure caught and fixed (infrastructure):** `npm run test:e2e` (JSON jest config,
+`test/jest-e2e.json`) reported "No files found" / 0 test matches in this environment, even though the
+spec file existed and its testRegex matched it under manual inspection. Confirmed via `git stash` that
+this was pre-existing (broken identically on the unmodified repo, not something introduced by this
+session's edits) — root cause not fully isolated, but a `.cjs` config (`test/jest-e2e.cjs`) with
+otherwise-identical settings runs correctly; swapped `package.json`'s `test:e2e` script to use it.
+Also fixed a pre-existing, previously-noted-but-unfixed cosmetic issue: `backend/tsconfig.json` had no
+Jest types, so `describe`/`it`/`expect` showed as unresolved in the IDE for `test/*.e2e-spec.ts` (added
+`"types": ["jest", "node"]`).
+
+**Verification:** `npx tsc --noEmit` clean on both backend and frontend; `npm run test:e2e` 20/20
+passing; each edit re-read before considering it done.
+
+**Not yet done:** `/transcripts/` still needs the *raw* session exports (this file, `AI_WORKFLOW.md`,
+is the curated summary, not the raw transcript) — see `transcripts/README.md` for what's expected
+there before final submission.

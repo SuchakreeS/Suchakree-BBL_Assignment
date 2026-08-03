@@ -1,15 +1,13 @@
 import { IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 
-export class UpdateBookmarkDto {
+export class ReplaceBookmarkDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(200)
-  @IsOptional()
-  title?: string;
+  title!: string;
 
   @IsUrl({ require_protocol: true })
-  @IsOptional()
-  url?: string;
+  url!: string;
 
   @IsString()
   @IsOptional()

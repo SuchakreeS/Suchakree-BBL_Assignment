@@ -277,5 +277,113 @@ describe('Multi-tenant data isolation (e2e)', () => {
         .set('Authorization', `Bearer ${USER_ALPHA}`)
         .expect(404);
     });
+
+    it('replaces a bookmark via PUT (full update)', async () => {
+      const collectionRes = await request(app.getHttpServer())
+        .post('/collections')
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .send({ name: "Alpha's PUT Home" })
+        .expect(201);
+
+      const createRes = await request(app.getHttpServer())
+        .post('/bookmarks')
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .send({ title: 'Original', url: 'https://alpha.example.com', collectionId: collectionRes.body.id })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .put(`/bookmarks/${createRes.body.id}`)
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .send({ title: 'Replaced', url: 'https://replaced.example.com' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.title).toBe('Replaced');
+          expect(res.body.url).toBe('https://replaced.example.com');
+        });
+    });
+
+    it('replaces a collection via PUT (full update)', async () => {
+      const createRes = await request(app.getHttpServer())
+        .post('/collections')
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .send({ name: 'Original Name' })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .put(`/collections/${createRes.body.id}`)
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .send({ name: 'Replaced Name' })
+        .expect(200)
+        .expect((res) => expect(res.body.name).toBe('Replaced Name'));
+    });
+
+    it('returns the caller identity from GET /me', async () => {
+      await request(app.getHttpServer())
+        .get('/me')
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .expect(200)
+        .expect((res) => expect(res.body.sub).toBe(USER_ALPHA));
+    });
+
+    it('lists only its own bookmarks via GET /collections/:id/bookmarks', async () => {
+      const collectionRes = await request(app.getHttpServer())
+        .post('/collections')
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .send({ name: "Alpha's Nested Home" })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post('/bookmarks')
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .send({ title: 'Nested', url: 'https://nested.example.com', collectionId: collectionRes.body.id })
+        .expect(201);
+
+      const res = await request(app.getHttpServer())
+        .get(`/collections/${collectionRes.body.id}/bookmarks`)
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .expect(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].title).toBe('Nested');
+    });
+
+    it('blocks GET /collections/:id/bookmarks for another tenant\'s collection (404)', async () => {
+      await request(app.getHttpServer())
+        .get(`/collections/${betaCollectionId}/bookmarks`)
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .expect(404);
+    });
+
+    it('filters GET /bookmarks?collectionId= server-side, scoped to owner', async () => {
+      const collectionRes = await request(app.getHttpServer())
+        .post('/collections')
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .send({ name: "Alpha's Filter Home" })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post('/bookmarks')
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .send({ title: 'In collection', url: 'https://in.example.com', collectionId: collectionRes.body.id })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/bookmarks')
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .send({ title: 'Uncategorised', url: 'https://un.example.com' })
+        .expect(201);
+
+      const res = await request(app.getHttpServer())
+        .get(`/bookmarks?collectionId=${collectionRes.body.id}`)
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .expect(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].title).toBe('In collection');
+    });
+
+    it('blocks filtering GET /bookmarks?collectionId= by another tenant\'s collection (404)', async () => {
+      await request(app.getHttpServer())
+        .get(`/bookmarks?collectionId=${betaCollectionId}`)
+        .set('Authorization', `Bearer ${USER_ALPHA}`)
+        .expect(404);
+    });
   });
 });

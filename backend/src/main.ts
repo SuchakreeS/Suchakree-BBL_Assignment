@@ -8,7 +8,7 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173',
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
   app.useGlobalGuards(app.get(HybridAuthGuard));

@@ -8,11 +8,13 @@ import {
   Param,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import { OwnerId } from '../auth/owner-id.decorator';
 import { CollectionsService } from './collections.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
+import { ReplaceCollectionDto } from './dto/replace-collection.dto';
 
 @Controller('collections')
 export class CollectionsController {
@@ -31,6 +33,16 @@ export class CollectionsController {
   @Get(':id')
   findOne(@OwnerId() ownerId: string, @Param('id') id: string) {
     return this.collectionsService.findOne(ownerId, id);
+  }
+
+  @Get(':id/bookmarks')
+  findBookmarks(@OwnerId() ownerId: string, @Param('id') id: string) {
+    return this.collectionsService.findBookmarks(ownerId, id);
+  }
+
+  @Put(':id')
+  replace(@OwnerId() ownerId: string, @Param('id') id: string, @Body() dto: ReplaceCollectionDto) {
+    return this.collectionsService.replace(ownerId, id, dto);
   }
 
   @Patch(':id')
